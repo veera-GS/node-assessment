@@ -107,7 +107,6 @@ export default function TimesheetEntry() {
     }
   };
 
-  // Simple styles
   const inputStyle = {
     padding: '8px 12px',
     border: '1px solid #ccc',
@@ -180,7 +179,6 @@ export default function TimesheetEntry() {
         </h1>
       </div>
 
-      {/* Manual Entry Section */}
       <div
         style={{
           border: '1px solid #ddd',

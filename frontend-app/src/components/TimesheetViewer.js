@@ -28,10 +28,6 @@ export default function TimesheetViewer() {
     setLoading(false);
   };
 
-  // useEffect(() => {
-  //   fetchData();
-  // }, [filters]);
-
   const handleEdit = (record) => {
     setEditingId(record._id);
     setEditForm({
@@ -108,7 +104,6 @@ export default function TimesheetViewer() {
     setFilters({ name: '', companyName: '', from: '', to: '' });
   };
 
-  // Simple styles
   const inputStyle = {
     padding: '8px 12px',
     border: '1px solid #ccc',
@@ -153,7 +148,6 @@ export default function TimesheetViewer() {
         margin: '0 auto',
       }}
     >
-      {/* Header */}
       <div
         style={{
           borderBottom: '2px solid #333',
@@ -179,7 +173,6 @@ export default function TimesheetViewer() {
         </div>
       </div>
 
-      {/* Filters */}
       <div
         style={{
           border: '1px solid #ddd',
@@ -297,7 +290,6 @@ export default function TimesheetViewer() {
         </div>
       </div>
 
-      {/* Table */}
       <div style={{ border: '1px solid #ddd' }}>
         <div
           style={{

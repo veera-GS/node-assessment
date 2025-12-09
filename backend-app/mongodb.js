@@ -7,7 +7,7 @@ let db;
 
 export async function connectDB() {
   try {
-    if (db) return db; // Reuse existing connection
+    if (db) return db;
 
     client = new MongoClient(process.env.MONGO_URI, {
       serverApi: {
@@ -20,10 +20,9 @@ export async function connectDB() {
     await client.connect();
     console.log('✔ Connected to MongoDB Atlas');
 
-    db = client.db('timesheet'); // Must match DB name in URI
-    return db;
+    db = client.db('timesheet');
   } catch (err) {
-    console.error('❌ MongoDB Connection Error:', err);
+    console.error('MongoDB Connection Error:', err);
     throw err;
   }
 }
