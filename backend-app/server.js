@@ -6,15 +6,13 @@ import { createClient } from '@supabase/supabase-js';
 import { connectDB } from './mongodb.js';
 import { ObjectId } from 'mongodb';
 
-dotenv.config(); // Load .env FIRST
+dotenv.config();
 
-// Validate env variables
 if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE) {
-  console.error('❌ ERROR: Missing Supabase environment variables');
+  console.error('Missing Supabase environment variables');
   process.exit(1);
 }
 
-// Quick JWT validation (basic check: starts with 'eyJ' and has 3 segments separated by '.')
 const isValidJWT = (token) => {
   if (!token || typeof token !== 'string') return false;
   const segments = token.split('.');
@@ -27,18 +25,17 @@ const isValidJWT = (token) => {
 
 if (!isValidJWT(process.env.SUPABASE_SERVICE_ROLE)) {
   console.error(
-    '❌ ERROR: SUPABASE_SERVICE_ROLE is not a valid JWT. Check your .env file.'
+    'SUPABASE_SERVICE_ROLE is not a valid JWT. Check your .env file.'
   );
   process.exit(1);
 }
 
-console.log('✅ SUPABASE_URL loaded');
+console.log('SUPABASE_URL loaded');
 console.log(
-  '✅ SERVICE_ROLE JWT validated (first 20 chars):',
+  'SERVICE_ROLE JWT validated (first 20 chars):',
   process.env.SUPABASE_SERVICE_ROLE.substring(0, 20)
 );
 
-// Create Supabase client
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE,
@@ -54,18 +51,12 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-// Multer for file handling (buffer)
 const upload = multer({ storage: multer.memoryStorage() });
 
-/* ============================================================
-   CREATE TIMESHEET RECORD
-============================================================ */
 app.post('/api/timesheet/create', upload.single('file'), async (req, res) => {
   try {
     const db = await connectDB();
-    // Parse rows sent from frontend
     const rows = JSON.parse(req.body.rows);
-    // Validate hours
     for (const row of rows) {
       if (row.totalHours < 5 || row.totalHours > 8) {
         return res.status(400).json({
@@ -74,19 +65,17 @@ app.post('/api/timesheet/create', upload.single('file'), async (req, res) => {
       }
     }
     let fileUrl = null;
-    /* -----------------------------
-       Upload file to Supabase
-    ----------------------------- */
+
     if (req.file) {
       const fileName = `timesheet_${Date.now()}_${req.file.originalname}`;
-      console.log('📤 Uploading file:', fileName); // Debug log
+      console.log('Uploading file ******', fileName);
       const { data, error } = await supabase.storage
-        .from('files') // Bucket name
+        .from('files')
         .upload(fileName, req.file.buffer, {
           contentType: req.file.mimetype,
         });
       if (error) {
-        console.error('Supabase Upload Error Details:', {
+        console.error('Supabase Upload Error Details*******', {
           message: error.message,
           status: error.status,
           statusCode: error.statusCode,
@@ -94,18 +83,16 @@ app.post('/api/timesheet/create', upload.single('file'), async (req, res) => {
         });
         return res.status(500).json({
           error: 'Supabase upload failed',
-          details: error.message, // Expose for debugging; remove in prod
+          details: error.message,
         });
       }
-      console.log('✅ Upload successful, generating public URL'); // Debug log
+      console.log('Upload successful, generating public URL *******');
       const { data: urlData } = supabase.storage
         .from('files')
         .getPublicUrl(fileName);
       fileUrl = urlData.publicUrl;
     }
-    /* -----------------------------
-       Save rows into MongoDB
-    ----------------------------- */
+
     const saveData = rows.map((r) => ({
       ...r,
       fileUrl,
@@ -122,9 +109,6 @@ app.post('/api/timesheet/create', upload.single('file'), async (req, res) => {
   }
 });
 
-/* ============================================================
-   READ Timesheets (Filters + Pagination)
-============================================================ */
 app.get('/api/timesheet', async (req, res) => {
   try {
     const db = await connectDB();
@@ -153,7 +137,6 @@ app.post('/api/timesheet/update', async (req, res) => {
     console.log('_id*******', id);
     console.log('reqdata*******', req.body);
 
-    // Validate ObjectId
     if (!ObjectId.isValid(id)) {
       return res.status(400).json({ error: 'Invalid timesheet ID format' });
     }
@@ -180,20 +163,15 @@ app.post('/api/timesheet/update', async (req, res) => {
   }
 });
 
-/* ============================================================
-   DELETE TIMESHEET RECORD (Clean & Safe)
-============================================================ */
 app.post('/api/timesheet/delete', async (req, res) => {
   try {
     const db = await connectDB();
     const { id } = req.body;
 
-    // Validate MongoDB ObjectId
     if (!ObjectId.isValid(id)) {
       return res.status(400).json({ error: 'Invalid timesheet ID format' });
     }
 
-    // Find the record first (to get fileUrl for cleanup)
     const record = await db
       .collection('timesheets')
       .findOne({ _id: new ObjectId(id) });
@@ -202,13 +180,10 @@ app.post('/api/timesheet/delete', async (req, res) => {
       return res.status(404).json({ error: 'Timesheet record not found' });
     }
 
-    // Delete from MongoDB
     await db.collection('timesheets').deleteOne({ _id: new ObjectId(id) });
 
-    // Optional: Delete associated file from Supabase Storage
     if (record.fileUrl) {
       try {
-        // Extract filename from public URL
         const fileName = record.fileUrl.split('/').pop();
         await supabase.storage.from('files').remove([fileName]);
         console.log('Deleted file from Supabase:', fileName);
@@ -227,16 +202,10 @@ app.post('/api/timesheet/delete', async (req, res) => {
   }
 });
 
-/* ============================================================
-   UTILITY
-============================================================ */
 function calculateHours(pIn, pOut) {
   return (new Date(pOut) - new Date(pIn)) / (1000 * 60 * 60);
 }
 
-/* ============================================================
-   START SERVER
-============================================================ */
 app.listen(5000, () => {
   console.log('✔ Server running at http://localhost:5000');
 });
