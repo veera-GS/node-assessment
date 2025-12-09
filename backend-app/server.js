@@ -4,6 +4,7 @@ import multer from 'multer';
 import dotenv from 'dotenv';
 import { createClient } from '@supabase/supabase-js';
 import { connectDB } from './mongodb.js';
+import { ObjectId } from 'mongodb';
 
 dotenv.config(); // Load .env FIRST
 
@@ -142,6 +143,87 @@ app.get('/api/timesheet', async (req, res) => {
     res.json(records);
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/timesheet/update', async (req, res) => {
+  try {
+    const db = await connectDB();
+    const { id, data } = req.body;
+    console.log('_id*******', id);
+    console.log('reqdata*******', req.body);
+
+    // Validate ObjectId
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).json({ error: 'Invalid timesheet ID format' });
+    }
+
+    const record = await db.collection('timesheets').findOne({
+      _id: new ObjectId(id),
+    });
+
+    const update = await db.collection('timesheets').updateOne(
+      {
+        _id: new ObjectId(id),
+      },
+      { $set: data }
+    );
+
+    if (!record) {
+      return res.status(404).json({ error: 'Timesheet not found' });
+    }
+
+    res.json(record);
+  } catch (err) {
+    console.error('Get Single Timesheet Error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/* ============================================================
+   DELETE TIMESHEET RECORD (Clean & Safe)
+============================================================ */
+app.post('/api/timesheet/delete', async (req, res) => {
+  try {
+    const db = await connectDB();
+    const { id } = req.body;
+
+    // Validate MongoDB ObjectId
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).json({ error: 'Invalid timesheet ID format' });
+    }
+
+    // Find the record first (to get fileUrl for cleanup)
+    const record = await db
+      .collection('timesheets')
+      .findOne({ _id: new ObjectId(id) });
+
+    if (!record) {
+      return res.status(404).json({ error: 'Timesheet record not found' });
+    }
+
+    // Delete from MongoDB
+    await db.collection('timesheets').deleteOne({ _id: new ObjectId(id) });
+
+    // Optional: Delete associated file from Supabase Storage
+    if (record.fileUrl) {
+      try {
+        // Extract filename from public URL
+        const fileName = record.fileUrl.split('/').pop();
+        await supabase.storage.from('files').remove([fileName]);
+        console.log('Deleted file from Supabase:', fileName);
+      } catch (err) {
+        console.warn(
+          'Could not delete file from Supabase (non-blocking):',
+          err.message
+        );
+      }
+    }
+
+    res.json({ message: 'Timesheet deleted successfully' });
+  } catch (err) {
+    console.error('Delete Error:', err);
+    res.status(500).json({ error: 'Server error during deletion' });
   }
 });
 
