@@ -13,8 +13,7 @@ export default function TimesheetViewer() {
   const [loading, setLoading] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({});
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [deleteId, setDeleteId] = useState(null);
+  // Removed: showDeleteModal & deleteId
 
   const fetchData = async () => {
     setLoading(true);
@@ -30,7 +29,6 @@ export default function TimesheetViewer() {
     setLoading(false);
   };
 
-  // Auto-fetch on mount and when filters change
   useEffect(() => {
     fetchData();
   }, [filters]);
@@ -44,7 +42,6 @@ export default function TimesheetViewer() {
       punchOut: record.punchOut || '',
       totalHours: record.totalHours || '',
       date: record.date || '',
-      // fileUrl: record.fileUrl || null,
     });
   };
 
@@ -59,7 +56,6 @@ export default function TimesheetViewer() {
         id: editingId,
       });
 
-      // Update UI instantly
       setData((prev) =>
         prev.map((item) =>
           item._id === editingId ? { ...item, ...editForm } : item
@@ -68,7 +64,7 @@ export default function TimesheetViewer() {
 
       setEditingId(null);
       setEditForm({});
-      alert('✅ Updated successfully!');
+      alert('Updated successfully!');
     } catch (error) {
       console.error('Update failed:', error);
       alert('Update failed: ' + (error.response?.data?.error || error.message));
@@ -80,21 +76,22 @@ export default function TimesheetViewer() {
     setEditForm({});
   };
 
+  // New: Simple confirm alert on delete
   const handleDeleteClick = (id) => {
-    setDeleteId(id);
-    setShowDeleteModal(true);
+    if (
+      window.confirm(
+        'Are you sure you want to delete this timesheet record? This action cannot be undone.'
+      )
+    ) {
+      handleConfirmDelete(id);
+    }
   };
 
-  const handleConfirmDelete = async () => {
+  const handleConfirmDelete = async (id) => {
     try {
-      await axios.post(`http://localhost:5000/api/timesheet/delete`, {
-        id: deleteId,
-      });
-
-      setData((prev) => prev.filter((item) => item._id !== deleteId));
-      setShowDeleteModal(false);
-      setDeleteId(null);
-      alert('🗑️ Deleted successfully!');
+      await axios.post(`http://localhost:5000/api/timesheet/delete`, { id });
+      setData((prev) => prev.filter((item) => item._id !== id));
+      alert('Deleted successfully!');
     } catch (error) {
       console.error('Delete failed:', error);
       alert('Delete failed: ' + (error.response?.data?.error || error.message));
@@ -119,14 +116,210 @@ export default function TimesheetViewer() {
     setFilters({ name: '', companyName: '', from: '', to: '' });
   };
 
-  // Keep your beautiful styles (unchanged)
+  // Your beautiful styles (exactly the same)
   const styles = {
-    /* ... all your existing styles ... */
+    container: {
+      maxWidth: '1400px',
+      margin: '0 auto',
+      padding: '30px',
+      fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+      backgroundColor: '#f5f7fa',
+      minHeight: '100vh',
+    },
+    header: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: '30px',
+      padding: '20px 30px',
+      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      borderRadius: '15px',
+      boxShadow: '0 10px 40px rgba(102, 126, 234, 0.3)',
+    },
+    title: {
+      color: 'white',
+      margin: 0,
+      fontSize: '28px',
+      fontWeight: '600',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '10px',
+    },
+    filterCard: {
+      backgroundColor: 'white',
+      borderRadius: '15px',
+      padding: '25px',
+      marginBottom: '25px',
+      boxShadow: '0 5px 20px rgba(0,0,0,0.08)',
+    },
+    filterTitle: {
+      fontSize: '16px',
+      fontWeight: '600',
+      color: '#333',
+      marginBottom: '20px',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '8px',
+    },
+    filterGrid: {
+      display: 'grid',
+      gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+      gap: '20px',
+      marginBottom: '20px',
+    },
+    filterGroup: { display: 'flex', flexDirection: 'column', gap: '8px' },
+    label: {
+      fontSize: '13px',
+      fontWeight: '500',
+      color: '#666',
+      textTransform: 'uppercase',
+      letterSpacing: '0.5px',
+    },
+    select: {
+      padding: '12px 15px',
+      borderRadius: '10px',
+      border: '2px solid #e1e5eb',
+      fontSize: '14px',
+      color: '#333',
+      backgroundColor: 'white',
+      cursor: 'pointer',
+      transition: 'all 0.3s ease',
+      outline: 'none',
+    },
+    input: {
+      padding: '12px 15px',
+      borderRadius: '10px',
+      border: '2px solid #e1e5eb',
+      fontSize: '14px',
+      color: '#333',
+      transition: 'all 0.3s ease',
+      outline: 'none',
+    },
+    buttonGroup: { display: 'flex', gap: '12px', flexWrap: 'wrap' },
+    btnPrimary: {
+      padding: '12px 25px',
+      borderRadius: '10px',
+      border: 'none',
+      fontSize: '14px',
+      fontWeight: '600',
+      cursor: 'pointer',
+      transition: 'all 0.3s ease',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '8px',
+      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      color: 'white',
+    },
+    btnSecondary: {
+      padding: '12px 25px',
+      borderRadius: '10px',
+      border: '2px solid #e1e5eb',
+      fontSize: '14px',
+      fontWeight: '600',
+      cursor: 'pointer',
+      transition: 'all 0.3s ease',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '8px',
+      backgroundColor: 'white',
+      color: '#666',
+    },
+    btnExport: {
+      padding: '12px 25px',
+      borderRadius: '10px',
+      border: 'none',
+      fontSize: '14px',
+      fontWeight: '600',
+      cursor: 'pointer',
+      transition: 'all 0.3s ease',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '8px',
+      backgroundColor: '#059669',
+      color: 'white',
+    },
+    tableCard: {
+      backgroundColor: 'white',
+      borderRadius: '15px',
+      overflow: 'hidden',
+      boxShadow: '0 5px 20px rgba(0,0,0,0.08)',
+    },
+    tableHeader: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      padding: '20px 25px',
+      borderBottom: '1px solid #e1e5eb',
+    },
+    tableTitle: { fontSize: '18px', fontWeight: '600', color: '#333' },
+    recordCount: {
+      backgroundColor: '#667eea',
+      color: 'white',
+      padding: '5px 15px',
+      borderRadius: '20px',
+      fontSize: '13px',
+      fontWeight: '500',
+    },
+    table: { width: '100%', borderCollapse: 'collapse' },
+    th: {
+      padding: '15px 20px',
+      textAlign: 'left',
+      backgroundColor: '#f8fafc',
+      color: '#666',
+      fontWeight: '600',
+      fontSize: '13px',
+      textTransform: 'uppercase',
+      letterSpacing: '0.5px',
+      borderBottom: '2px solid #e1e5eb',
+    },
+    td: {
+      padding: '18px 20px',
+      borderBottom: '1px solid #f1f5f9',
+      color: '#333',
+      fontSize: '14px',
+    },
+    tr: { transition: 'background-color 0.2s ease' },
+    editInput: {
+      padding: '8px 12px',
+      borderRadius: '6px',
+      border: '2px solid #667eea',
+      fontSize: '14px',
+      width: '100%',
+      minWidth: '80px',
+      outline: 'none',
+    },
+    actionBtn: {
+      padding: '8px 12px',
+      borderRadius: '6px',
+      border: 'none',
+      fontSize: '12px',
+      fontWeight: '600',
+      cursor: 'pointer',
+      transition: 'all 0.2s ease',
+      marginRight: '8px',
+    },
+    editBtn: { backgroundColor: '#3b82f6', color: 'white' },
+    deleteBtn: { backgroundColor: '#ef4444', color: 'white' },
+    saveBtn: { backgroundColor: '#10b981', color: 'white' },
+    cancelBtn: { backgroundColor: '#6b7280', color: 'white' },
+    emptyState: { textAlign: 'center', padding: '60px 20px', color: '#999' },
+    emptyIcon: { fontSize: '60px', marginBottom: '20px' },
+    loadingSpinner: {
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: '40px',
+    },
+    badge: {
+      padding: '4px 12px',
+      borderRadius: '20px',
+      fontSize: '12px',
+      fontWeight: '500',
+    },
   };
 
   return (
     <div style={styles.container}>
-      {/* Header */}
       <div style={styles.header}>
         <h1 style={styles.title}>Timesheet Management</h1>
         <div style={{ display: 'flex', gap: '10px' }}>
@@ -139,7 +332,6 @@ export default function TimesheetViewer() {
         </div>
       </div>
 
-      {/* Filters */}
       <div style={styles.filterCard}>
         <div style={styles.filterTitle}>Filter Records</div>
         <div style={styles.filterGrid}>
@@ -202,7 +394,6 @@ export default function TimesheetViewer() {
         </div>
       </div>
 
-      {/* Table */}
       <div style={styles.tableCard}>
         <div style={styles.tableHeader}>
           <span style={styles.tableTitle}>Timesheet Records</span>
@@ -313,7 +504,6 @@ export default function TimesheetViewer() {
                           />
                         ) : (
                           <span style={{ color: '#10b981', fontWeight: '500' }}>
-                            {' '}
                             {r.punchIn}
                           </span>
                         )}
@@ -330,7 +520,6 @@ export default function TimesheetViewer() {
                           />
                         ) : (
                           <span style={{ color: '#ef4444', fontWeight: '500' }}>
-                            {' '}
                             {r.punchOut}
                           </span>
                         )}
@@ -414,38 +603,7 @@ export default function TimesheetViewer() {
         )}
       </div>
 
-      {/* Delete Modal */}
-      {showDeleteModal && (
-        <div style={styles.modal}>
-          <div style={styles.modalContent}>
-            <div style={styles.modalIcon}>Warning</div>
-            <h3 style={styles.modalTitle}>Confirm Delete</h3>
-            <p style={styles.modalText}>This action cannot be undone.</p>
-            <div style={styles.modalButtons}>
-              <button
-                style={{
-                  ...styles.actionBtn,
-                  ...styles.cancelBtn,
-                  padding: '12px 25px',
-                }}
-                onClick={() => setShowDeleteModal(false)}
-              >
-                Cancel
-              </button>
-              <button
-                style={{
-                  ...styles.actionBtn,
-                  ...styles.deleteBtn,
-                  padding: '12px 25px',
-                }}
-                onClick={handleConfirmDelete}
-              >
-                Delete
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* DELETE MODAL REMOVED - NOW USING window.confirm() */}
     </div>
   );
 }
