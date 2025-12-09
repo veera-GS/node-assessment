@@ -28,9 +28,9 @@ export default function TimesheetViewer() {
     setLoading(false);
   };
 
-  useEffect(() => {
-    fetchData();
-  }, [filters]);
+  // useEffect(() => {
+  //   fetchData();
+  // }, [filters]);
 
   const handleEdit = (record) => {
     setEditingId(record._id);
@@ -287,9 +287,12 @@ export default function TimesheetViewer() {
           </div>
         </div>
 
-        <div style={{ marginTop: '16px' }}>
+        <div style={{ marginTop: '16px', display: 'flex', gap: 20 }}>
           <button onClick={clearFilters} style={btnStyle}>
             Clear
+          </button>
+          <button onClick={fetchData} style={btnStyle}>
+            Search
           </button>
         </div>
       </div>
